@@ -1,8 +1,10 @@
 const startBtn = document.getElementById('start-btn');
 const resetBtn = document.getElementById('reset-btn');
+const themeToggleBtn = document.getElementById('theme-toggle-btn');
 const canvas = document.getElementById('ladder-canvas');
 const ctx = canvas.getContext('2d');
 const gameResults = document.getElementById('game-results');
+const body = document.body;
 
 const PLAYER_COUNT = 4;
 const LADDER_WIDTH = canvas.width;
@@ -15,6 +17,14 @@ let ladders = [];
 
 function drawLadder() {
     ctx.clearRect(0, 0, LADDER_WIDTH, LADDER_HEIGHT);
+
+    // Set line color based on theme
+    if (body.classList.contains('dark-mode')) {
+        ctx.strokeStyle = '#ccc';
+    } else {
+        ctx.strokeStyle = '#000';
+    }
+    ctx.lineWidth = 1;
 
     // Draw vertical lines
     for (let i = 1; i <= PLAYER_COUNT; i++) {
@@ -39,30 +49,59 @@ function createRungs() {
     ladders = [];
     for (let i = 0; i < PLAYER_COUNT - 1; i++) {
         for (let j = 0; j < 5; j++) { // Create 5 rungs per column
-            if (Math.random() > 0.5) {
+            const y = Math.random() * (LADDER_HEIGHT - 40) + 20;
+            const nearbyRung = ladders.find(r => r.start === i && Math.abs(r.y - y) < 20);
+            if (Math.random() > 0.5 && !nearbyRung) {
                 ladders.push({
                     start: i,
-                    y: Math.random() * (LADDER_HEIGHT - 40) + 20 // Avoid top and bottom edges
+                    y: y
                 });
             }
         }
     }
-    // Sort rungs by y-coordinate to prevent overlaps
-    ladders.sort((a, b) => a.y - b.y);
 }
 
-function runGame() {
+function tracePath(playerIndex) {
+    let currentPosition = playerIndex;
+    const path = [{ x: (playerIndex + 1) * LADDER_SPACING, y: 0 }];
+
+    const sortedLadders = [...ladders].sort((a, b) => a.y - b.y);
+
+    sortedLadders.forEach(rung => {
+        const rungY = rung.y;
+        if (rung.start === currentPosition) {
+            path.push({ x: (currentPosition + 1) * LADDER_SPACING, y: rungY });
+            path.push({ x: (currentPosition + 2) * LADDER_SPACING, y: rungY });
+            currentPosition++;
+        } else if (rung.start === currentPosition - 1) {
+            path.push({ x: (currentPosition + 1) * LADDER_SPACING, y: rungY });
+            path.push({ x: (currentPosition) * LADDER_SPACING, y: rungY });
+            currentPosition--;
+        }
+    });
+
+    path.push({ x: (currentPosition + 1) * LADDER_SPACING, y: LADDER_HEIGHT });
+    return { finalPosition: currentPosition, path: path };
+}
+
+function runGameAndDrawPath() {
     gameResults.innerHTML = '';
+    drawLadder(); // Redraw ladder to clear previous paths
+
     for (let i = 0; i < PLAYER_COUNT; i++) {
-        let currentPosition = i;
-        ladders.forEach(rung => {
-            if (rung.start === currentPosition) {
-                currentPosition++;
-            } else if (rung.start === currentPosition - 1) {
-                currentPosition--;
-            }
-        });
-        const resultText = `${players[i]} -> ${results[currentPosition]}`;
+        const { finalPosition, path } = tracePath(i);
+
+        // Draw the path
+        ctx.beginPath();
+        ctx.moveTo(path[0].x, path[0].y);
+        ctx.strokeStyle = `hsl(${i * 90}, 70%, 50%)`; // Different color for each path
+        ctx.lineWidth = 3;
+        for (let j = 1; j < path.length; j++) {
+            ctx.lineTo(path[j].x, path[j].y);
+        }
+        ctx.stroke();
+
+        const resultText = `${players[i]} -> ${results[finalPosition]}`;
         const resultElement = document.createElement('p');
         resultElement.textContent = resultText;
         gameResults.appendChild(resultElement);
@@ -84,12 +123,23 @@ startBtn.addEventListener('click', () => {
     ];
 
     createRungs();
-    drawLadder();
-    runGame();
+    runGameAndDrawPath();
 });
 
 resetBtn.addEventListener('click', () => {
     ctx.clearRect(0, 0, LADDER_WIDTH, LADDER_HEIGHT);
     gameResults.innerHTML = '';
     ladders = [];
+    drawLadder();
 });
+
+themeToggleBtn.addEventListener('click', () => {
+    body.classList.toggle('dark-mode');
+    drawLadder();
+    if(ladders.length > 0) {
+        runGameAndDrawPath();
+    }
+});
+
+// Initial draw
+drawLadder();
