@@ -6,7 +6,7 @@ const ctx = canvas.getContext('2d');
 const gameResults = document.getElementById('game-results');
 const body = document.body;
 
-const PLAYER_COUNT = 13;
+const PLAYER_COUNT = 10;
 const LADDER_WIDTH = canvas.width;
 const LADDER_HEIGHT = canvas.height;
 const LADDER_SPACING = LADDER_WIDTH / (PLAYER_COUNT + 1);
