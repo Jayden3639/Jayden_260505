@@ -6,7 +6,7 @@ const ctx = canvas.getContext('2d');
 const gameResults = document.getElementById('game-results');
 const body = document.body;
 
-const PLAYER_COUNT = 4;
+const PLAYER_COUNT = 13;
 const LADDER_WIDTH = canvas.width;
 const LADDER_HEIGHT = canvas.height;
 const LADDER_SPACING = LADDER_WIDTH / (PLAYER_COUNT + 1);
@@ -94,7 +94,7 @@ function runGameAndDrawPath() {
         // Draw the path
         ctx.beginPath();
         ctx.moveTo(path[0].x, path[0].y);
-        ctx.strokeStyle = `hsl(${i * 90}, 70%, 50%)`; // Different color for each path
+        ctx.strokeStyle = `hsl(${i * (360 / PLAYER_COUNT)}, 70%, 50%)`; // Different color for each path
         ctx.lineWidth = 3;
         for (let j = 1; j < path.length; j++) {
             ctx.lineTo(path[j].x, path[j].y);
@@ -109,18 +109,12 @@ function runGameAndDrawPath() {
 }
 
 startBtn.addEventListener('click', () => {
-    players = [
-        document.getElementById('player1').value,
-        document.getElementById('player2').value,
-        document.getElementById('player3').value,
-        document.getElementById('player4').value
-    ];
-    results = [
-        document.getElementById('result1').value,
-        document.getElementById('result2').value,
-        document.getElementById('result3').value,
-        document.getElementById('result4').value
-    ];
+    players = [];
+    results = [];
+    for (let i = 1; i <= PLAYER_COUNT; i++) {
+        players.push(document.getElementById('player' + i).value);
+        results.push(document.getElementById('result' + i).value);
+    }
 
     createRungs();
     runGameAndDrawPath();
